@@ -122,7 +122,7 @@ app.get('/basic/moveTo', function (req, res) {
         // extract data from the request = location to move the robot arm to {{"x":-14,"y":-117,"z":100"}
         let msg = JSON.parse(req.query.msg);
         // add the duration parameter
-        msg.duration = 100; // this is the default value for absolute movements
+        // msg.duration = 100; // this is the default value for absolute movements
 
         //send the publish message
         let pubData = publishData("publish:/moveTo", "/jetmax/speed_command", msg, false);
@@ -146,7 +146,7 @@ app.get('/basic/move', function (req, res) {
         // extract data from the request = relative movement of the robot arm to {{"x":-14,"y":-117,"z":100"}
         let msg = JSON.parse(req.query.msg);
         // add the duration parameter
-        msg.duration = 0.5; // this is the default value for relative movements
+        // msg.duration = 0.5; // this is the default value for relative movements
 
         // send the publish message
         let pubData = publishData("publish:/moveTo", "/jetmax/relative_command", msg, false);
