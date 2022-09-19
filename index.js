@@ -70,7 +70,7 @@ ws.on('message', function message(data) {
     else if (dataJson.topic === '/usb_cam/image_rect_color') {
         // TODO: check and save the image received
         // this should return an image as a 2D array --> CHECK
-        console.log(dataJson.msg);
+        //console.log(dataJson.msg);
     }
 })
 
