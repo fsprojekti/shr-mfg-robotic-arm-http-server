@@ -1,4 +1,4 @@
 {
-  "roboticArmIpAddress": "193.2.80.28",
+  "roboticArmIpAddress": "localhost",
   "nodejsPort": 3000
 }
