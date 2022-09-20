@@ -49,8 +49,8 @@ B-->|API endpoints|C
 | API endpoint | description | parameter(s) | returns |
 | ------------ | ----------- | ------------ | ------- |
 | <code>/basic/state</code> | retrieve full robotic arm data | / | JSON object |
-| <code>/basic/moveTo</code> | absolute move to a specific location | <code>msg={"x": a, "y" = b, "z" = c}</code> | /
-| <code>/basic/move</code> | relative move from current location | <code>msg={"x": a, "y" = b, "z" = c}</code> | /
+| <code>/basic/moveTo</code> | absolute move to a specific location | <code>msg={"x": a, "y": b, "z": c, "duration": speed}</code> | /
+| <code>/basic/move</code> | relative move from current location | <code>msg={"x": a, "y": b, "z": c, "duration": timeSecs}</code> | /
 | <code>/basic/suction</code> | enable or disable the suction of the robotic arm | <code>msg={"data": true/false}</code> | /
 
 * **Examples of usage:**
