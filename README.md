@@ -46,12 +46,12 @@ B-->|API endpoints|C
 * Install and use **axios** as an HTTP client. 
 * API endpoints:
 
-| API endpoint | description | parameter(s) | returns |
-| ------------ | ----------- | ------------ | ------- |
-| <code>/basic/state</code> | retrieve full robotic arm data | / | JSON object |
-| <code>/basic/moveTo</code> | absolute move to a specific location | <code>msg={"x": a, "y": b, "z": c, "duration": speed}</code> | /
-| <code>/basic/move</code> | relative move from current location | <code>msg={"x": a, "y": b, "z": c, "duration": timeSecs}</code> | /
-| <code>/basic/suction</code> | enable or disable the suction of the robotic arm | <code>msg={"data": true/false}</code> | /
+| API endpoint                | description                                      | parameter(s)                                                    | returns     |
+|-----------------------------|--------------------------------------------------|-----------------------------------------------------------------|-------------|
+| <code>/basic/state</code>   | retrieve full robotic arm data                   | /                                                               | JSON object |
+| <code>/basic/moveTo</code>  | absolute move to a specific location             | <code>msg={"x": a, "y": b, "z": c, "duration": speed}</code>    | /           |
+| <code>/basic/move</code>    | relative move from current location              | <code>msg={"x": a, "y": b, "z": c, "duration": timeSecs}</code> | /           |
+| <code>/basic/suction</code> | enable or disable the suction of the robotic arm | <code>msg={"data": true/false}</code>                           | /           |
 
 * **Examples of usage:**
     * calling API endpoint with no parameters
@@ -89,8 +89,8 @@ B-->|API endpoints|C
     ``` 
 
 * **Notes**:
-    * <code>/basic/moveTo</code> API endpoint has a pre-set duration of the move 100 ms, the moves are slow.
-    * <code>/basic/move</code> endpoint has a pre-set duration of the move of 0.1 ms. **The moves are fast, do not make big changes!**
+    * <code>/basic/moveTo</code> API endpoint duration parameters actually represents the speed the robotic arm moves; the value can be around 100.
+    * <code>/basic/move</code> API endpoint duration parameter is the time of the move in seconds; the value depends on the length of the move **so don't do big moves in a short time**.
     * When moving the robotic arm consider the limits of the robotic arm and of the operational area. 
 
 ## Formats of data
@@ -127,3 +127,7 @@ B-->|API endpoints|C
 "z": 0
 }
 ```
+
+## State of the application after 2022 Summer School on IIoT and blockchain
+* application was tested multiple times and works ok
+* **important note: Jetmax Robotic arm updates its status immediately after a move is requested and not when the end location is reached!**
