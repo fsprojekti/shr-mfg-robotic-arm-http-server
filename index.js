@@ -10,7 +10,6 @@ const app = express();
 require('console-stamp')(console, '[HH:MM:ss.l]');
 
 // open file with configuration data
-const fs = require('fs');
 const config = require("./config.json");
 
 // ########## global variables
@@ -68,7 +67,7 @@ ws.on('message', function message(data) {
     } else if (dataJson.topic === '/usb_cam/image_rect_color') {
         // TODO: check and save the image received
         // this should return an image as a 2D array --> CHECK
-        //console.log(dataJson.msg);
+        // console.log(dataJson.msg);
     }
 })
 
@@ -98,8 +97,7 @@ app.get('/', function (req, res) {
 
 });
 
-// API endpoint that returns current jetmax state
-// jetmax state is retrieved from jetmax ros system via websocket
+// API endpoint that returns current jetmax state, it is retrieved from jetmax ros system via websocket
 // data included: msg data from the /jetmax/status response, includes x, y and z coordinates of the robot arm, states of all 3 servos and joints, state of 2 PWMs and the sucker etc.
 app.get('/basic/state', function (req, res) {
 
@@ -122,43 +120,12 @@ app.get('/basic/moveTo', function (req, res) {
         // add the duration parameter
         // msg.duration = 100; // this is the default value for absolute movements
 
-        //send the publish message
+        //send the "publish" message
         let pubData = publishData("publish:/moveTo", "/jetmax/speed_command", msg, false);
         console.log("publish data sent: " + JSON.stringify(pubData));
         ws.send(JSON.stringify(pubData))
 
         res.send("/basic/moveTo endpoint completed successfully");
-    }
-
-});
-
-// API endpoint that moves jetmax to a specific location (absolute) - this version waits for the move to finish and only then it sends the response
-app.get('/basic/moveToAsync', function (req, res) {
-
-    console.log("received a request to the endpoint /basic/moveToAsync");
-
-    if (!req.query.msg) {
-        console.log("Error, missing msg parameter.");
-        res.send("Error, missing msg parameter.");
-    } else {
-        // extract data from the request = location to move the robot arm to {{"x":-14,"y":-117,"z":100"}
-        let msg = JSON.parse(req.query.msg);
-        // add the duration parameter
-        // msg.duration = 100; // this is the default value for absolute movements
-        let x = msg.x;
-        let y = msg.y;
-        let z = msg.z;
-
-        //send the publish message
-        let pubData = publishData("publish:/moveTo", "/jetmax/speed_command", msg, false);
-        console.log("publish data sent: " + JSON.stringify(pubData));
-        ws.send(JSON.stringify(pubData))
-
-        // wait for the move to finish and only then send the response
-        while (jetmaxState.x !== x && jetmaxState.y !== y && jetmaxState.z !== z) {
-            console.log("waiting for the move to finish ...");
-        }
-        res.send("/basic/moveToAsync endpoint completed successfully");
     }
 
 });
@@ -177,47 +144,12 @@ app.get('/basic/move', function (req, res) {
         // add the duration parameter
         // msg.duration = 0.5; // this is the default value for relative movements
 
-        // send the publish message
+        // send the "publish" message
         let pubData = publishData("publish:/moveTo", "/jetmax/relative_command", msg, false);
         console.log("publish data sent: " + JSON.stringify(pubData));
         ws.send(JSON.stringify(pubData))
 
         res.send("/basic/move endpoint completed successfully");
-    }
-
-});
-
-// API endpoint that moves jetmax from current location (relative)
-app.get('/basic/moveAsync', function (req, res) {
-
-    console.log("received a request to the endpoint /basic/move");
-
-    if (!req.query.msg) {
-        console.log("Error, missing msg parameter.");
-        res.send("Error, missing msg parameter.");
-    } else {
-        // extract data from the request = relative movement of the robot arm to {{"x":-14,"y":-117,"z":100"}
-        let msg = JSON.parse(req.query.msg);
-
-        // determine the end coordinate of the relative move
-        let endX = jetmaxState.x + msg.x;
-        let endY = jetmaxState.x + msg.y;
-        let endZ = jetmaxState.x + msg.z;
-
-        // add the duration parameter
-        // msg.duration = 0.5; // this is the default value for relative movements
-
-        // send the publish message
-        let pubData = publishData("publish:/moveTo", "/jetmax/relative_command", msg, false);
-        console.log("publish data sent: " + JSON.stringify(pubData));
-        ws.send(JSON.stringify(pubData))
-
-        // wait for the move to finish and only then send the response
-        while (endX !== jetmaxState.x && endY !== jetmaxState.y && endZ !== jetmaxState.z) {
-            console.log("waiting for the move to finish ...");
-        }
-
-        res.send("/basic/moveAsync endpoint completed successfully");
     }
 
 });
@@ -234,7 +166,7 @@ app.get('/basic/suction', function (req, res) {
         // extract data from the request = relative movement of the robot arm to {{"x":-14,"y":-117,"z":100"}
         let msg = JSON.parse(req.query.msg);
 
-        // send the publish message
+        // send the "publish" message
         let pubData = publishData("publish:/suction", "/jetmax/end_effector/sucker/command", msg, false);
         console.log("publish data sent: " + JSON.stringify(pubData));
         ws.send(JSON.stringify(pubData))
