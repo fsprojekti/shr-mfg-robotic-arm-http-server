@@ -293,8 +293,8 @@ msg: object with target location (x, y, z)
 */
 function calculateDistance(msg) {
 
-    //let currentLocation = {"x": jetmaxState.x, "y": jetmaxState.y, "z": jetmaxState.z};
-    let currentLocation = {"x": -184, "y": 80, "z": 215};
+    let currentLocation = {"x": jetmaxState.x, "y": jetmaxState.y, "z": jetmaxState.z};
+    // let currentLocation = {"x": -184, "y": 80, "z": 215};
 
     // calculate Euclidean distance between two locations, only considering x and y coordinates
     let distance;
