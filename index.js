@@ -300,18 +300,21 @@ function calculateDistance(msg) {
     let distance;
 
     // if we start from a reset position
-    if(currentLocation.x === 0) {
+    if (currentLocation.x === 0) {
         distance = Math.sqrt(Math.pow(msg.x - currentLocation.x, 2) + Math.pow(msg.y - currentLocation.y, 2));
     }
     // if the move is between two locations on the same side of the robotic arm
     else if ((currentLocation.x < 0 && msg.x < 0) || (currentLocation.x > 0 && msg.x > 0)) {
         distance = Math.sqrt(Math.pow(msg.x - currentLocation.x, 2) + Math.pow(msg.y - currentLocation.y, 2));
     }
-    // if the move os between locations on the both sides of the robotic arm --> first move to the reset location and then to the target location
-    else {
+    // if the move is between locations on the both sides of the robotic arm --> first move to the reset location and then to the target location
+    else if (msg.x !== undefined && msg.y !== undefined) {
         let distance1 = Math.sqrt(Math.pow(0 - currentLocation.x, 2) + Math.pow(-162.94 - currentLocation.y, 2));
         let distance2 = Math.sqrt(Math.pow(msg.x - 0, 2) + Math.pow(msg.y - (-162.94), 2));
-        distance = distance1+distance2;
+        distance = distance1 + distance2;
+    }
+    else {
+        distance = msg.z;
     }
     console.log("current: ", currentLocation, ", target: ", msg, ", distance: " + distance);
 
@@ -327,7 +330,11 @@ function calculateDuration(msg) {
     let duration;
     let speed = config.relativeMoveSpeed;
     let relativeMoveZ = msg.z;
-    duration = relativeMoveZ/speed;
+
+    if (relativeMoveZ < 0)
+        duration = 2 * Math.abs(relativeMoveZ) / speed;
+    else
+        duration = relativeMoveZ / speed;
 
     console.log("relativeMoveZ: ", relativeMoveZ, ", speed: ", speed, ", duration: " + duration);
 
@@ -342,16 +349,17 @@ function calculateTimeoutTime(msg) {
     let distance;
 
     // if a move is relative
-    if(msg.x === 0 && msg.y === 0)
+    if ((msg.x === 0 || msg.x === undefined) && (msg.y === 0 || msg.y === undefined)) {
         distance = msg.z;
+    }
     // if a move is absolute
-    else
+    else {
         distance = calculateDistance(msg);
-
-    let time = distance*0.003 + 0.85;
+    }
+    let time = distance * 0.003 + 0.85;
     console.log("distance:", distance, ", time: ", time);
 
-    return time*1000;
+    return time * 1000;
 }
 
 setInterval(() => {
@@ -359,4 +367,4 @@ setInterval(() => {
     // let msg = {"x": 100, "y": 50, "z": 100};
 
     // calculateTimeoutTime(msg);
-},1000)
+}, 1000)
