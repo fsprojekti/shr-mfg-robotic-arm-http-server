@@ -1,4 +1,6 @@
 {
   "roboticArmIpAddress": "localhost",
-  "nodejsPort": 3000
+  "nodejsPort": 3000,
+  "absoluteMoveSpeedDefault": 200,
+  "relativeMoveSpeed": 200
 }

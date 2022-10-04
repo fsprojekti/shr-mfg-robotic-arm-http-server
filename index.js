@@ -111,6 +111,8 @@ app.get('/basic/moveTo', function (req, res) {
 
     console.log("received a request to the endpoint /basic/moveTo");
 
+    console.log(req.query);
+
     if (!req.query.msg) {
         console.log("Error, missing msg parameter.");
         res.send("Error, missing msg parameter.");
@@ -120,14 +122,23 @@ app.get('/basic/moveTo', function (req, res) {
         // add the duration parameter
         // msg.duration = 100; // this is the default value for absolute movements
 
+        // calculate optimal absolute move speed based on current and target location of the robotic arm end effector
+        // NOTE: in the publish message this is denoted as msg.duration
+        // let speed = calculateSpeed(msg);
+        msg.duration = config.absoluteMoveSpeedDefault;
+
         //send the "publish" message
         let pubData = publishData("publish:/moveTo", "/jetmax/speed_command", msg, false);
         console.log("publish data sent: " + JSON.stringify(pubData));
-        ws.send(JSON.stringify(pubData))
+        ws.send(JSON.stringify(pubData));
 
-        res.send("/basic/moveTo endpoint completed successfully");
+        // set timeout time to wait for the end of the actual move
+        setTimeout(() => {
+            res.send("/basic/moveTo endpoint completed successfully");
+        }, calculateTimeoutTime(msg));
+
+        // res.send("/basic/moveTo endpoint completed successfully");
     }
-
 });
 
 // API endpoint that moves jetmax from current location (relative)
@@ -144,14 +155,19 @@ app.get('/basic/move', function (req, res) {
         // add the duration parameter
         // msg.duration = 0.5; // this is the default value for relative movements
 
+        // calculate optimal relative move duration based on the relative move length
+        msg.duration = calculateDuration(msg);
+
         // send the "publish" message
         let pubData = publishData("publish:/moveTo", "/jetmax/relative_command", msg, false);
         console.log("publish data sent: " + JSON.stringify(pubData));
-        ws.send(JSON.stringify(pubData))
+        ws.send(JSON.stringify(pubData));
 
-        res.send("/basic/move endpoint completed successfully");
+        // set timeout time to wait for the end of the actual move
+        setTimeout(() => {
+            res.send("/basic/move endpoint completed successfully");
+        }, calculateTimeoutTime(msg));
     }
-
 });
 
 // API endpoint that turns jetmax end effector suction on or off
@@ -171,7 +187,7 @@ app.get('/basic/suction', function (req, res) {
         console.log("publish data sent: " + JSON.stringify(pubData));
         ws.send(JSON.stringify(pubData))
 
-        res.send("/basic/move endpoint completed successfully");
+        res.send("/basic/suction endpoint completed successfully");
     }
 });
 
@@ -271,3 +287,76 @@ function callServiceData(id, service, type, args) {
     return data;
 
 }
+
+/* CALCULATE THE DISTANCE OF THE MOVE
+msg: object with target location (x, y, z)
+*/
+function calculateDistance(msg) {
+
+    //let currentLocation = {"x": jetmaxState.x, "y": jetmaxState.y, "z": jetmaxState.z};
+    let currentLocation = {"x": -184, "y": 80, "z": 215};
+
+    // calculate Euclidean distance between two locations, only considering x and y coordinates
+    let distance;
+
+    // if we start from a reset position
+    if(currentLocation.x === 0) {
+        distance = Math.sqrt(Math.pow(msg.x - currentLocation.x, 2) + Math.pow(msg.y - currentLocation.y, 2));
+    }
+    // if the move is between two locations on the same side of the robotic arm
+    else if ((currentLocation.x < 0 && msg.x < 0) || (currentLocation.x > 0 && msg.x > 0)) {
+        distance = Math.sqrt(Math.pow(msg.x - currentLocation.x, 2) + Math.pow(msg.y - currentLocation.y, 2));
+    }
+    // if the move os between locations on the both sides of the robotic arm --> first move to the reset location and then to the target location
+    else {
+        let distance1 = Math.sqrt(Math.pow(0 - currentLocation.x, 2) + Math.pow(-162.94 - currentLocation.y, 2));
+        let distance2 = Math.sqrt(Math.pow(msg.x - 0, 2) + Math.pow(msg.y - (-162.94), 2));
+        distance = distance1+distance2;
+    }
+    console.log("current: ", currentLocation, ", target: ", msg, ", distance: " + distance);
+
+    return distance;
+}
+
+/* CALCULATE DURATION OF THE RELATIVE MOVE
+msg: object with target location (x, y, z)
+*/
+function calculateDuration(msg) {
+
+    // calculate Euclidean distance between two locations, only considering x and y coordinates
+    let duration;
+    let speed = config.relativeMoveSpeed;
+    let relativeMoveZ = msg.z;
+    duration = relativeMoveZ/speed;
+
+    console.log("relativeMoveZ: ", relativeMoveZ, ", speed: ", speed, ", duration: " + duration);
+
+    return duration;
+}
+
+/* CALCULATE TIMEOUT TIME
+msg: object with target location (x, y, z)
+*/
+function calculateTimeoutTime(msg) {
+
+    let distance;
+
+    // if a move is relative
+    if(msg.x === 0 && msg.y === 0)
+        distance = msg.z;
+    // if a move is absolute
+    else
+        distance = calculateDistance(msg);
+
+    let time = distance*0.003 + 0.85;
+    console.log("distance:", distance, ", time: ", time);
+
+    return time*1000;
+}
+
+setInterval(() => {
+
+    // let msg = {"x": 100, "y": 50, "z": 100};
+
+    // calculateTimeoutTime(msg);
+},1000)
