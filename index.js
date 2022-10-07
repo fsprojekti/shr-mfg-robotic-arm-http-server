@@ -67,7 +67,7 @@ ws.on('message', function message(data) {
     } else if (dataJson.topic === '/usb_cam/image_rect_color') {
         // TODO: check and save the image received
         // this should return an image as a 2D array --> CHECK
-        // console.log(dataJson.msg);
+        console.log(dataJson.msg);
     }
 })
 
@@ -188,6 +188,30 @@ app.get('/basic/suction', function (req, res) {
         ws.send(JSON.stringify(pubData))
 
         res.send("/basic/suction endpoint completed successfully");
+    }
+});
+
+// API endpoint that determines the center of the object (package) using the April tag
+// first it requests an image from the camera
+// then it detects the AprilTag and identifies the package
+// then it calculates the coordinate of the exact center of the package
+app.get('/basic/objectCenter', function (req, res) {
+
+    console.log("received a request to the endpoint /basic/objectCenter");
+
+    if (!req.query.msg) {
+        console.log("Error, missing msg parameter.");
+        res.send("Error, missing msg parameter.");
+    } else {
+        // extract data from the request = relative movement of the robot arm to {{"x":-14,"y":-117,"z":100"}
+        let msg = JSON.parse(req.query.msg);
+
+        // /usb_cam/image_rect_color
+        let subData2 = subscribeData("subscribe:/image", "/usb_cam/image_rect_color", "sensor_msgs/Image", "none", 0, 0);
+        console.log("subscribe data sent: " + JSON.stringify(subData2));
+        ws.send(JSON.stringify(subData2));
+
+        res.send("/basic/objectCenter endpoint completed successfully");
     }
 });
 
