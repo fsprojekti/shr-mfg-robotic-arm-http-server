@@ -3,6 +3,7 @@ import WebSocket from 'ws';
 import {createRequire} from "module";
 
 const require = createRequire(import.meta.url);
+const {spawn} = require('child_process');
 const express = require('express');
 const app = express();
 
@@ -32,9 +33,9 @@ ws.on('open', function open() {
     ws.send(JSON.stringify(subData));
 
     // /usb_cam/image_rect_color
-    subData = subscribeData("subscribe:/image", "/usb_cam/image_rect_color", "sensor_msgs/Image", "none", 0, 0);
-    console.log("subscribe data sent: " + JSON.stringify(subData));
-    ws.send(JSON.stringify(subData));
+    // subData = subscribeData("subscribe:/image", "/usb_cam/image_rect_color", "sensor_msgs/Image", "none", 0, 0);
+    // console.log("subscribe data sent: " + JSON.stringify(subData));
+    // ws.send(JSON.stringify(subData));
 
     // ADVERTISE ALL RELEVANT TOPICS
     // advertise the /jetmax/speed_command
@@ -67,7 +68,7 @@ ws.on('message', function message(data) {
     } else if (dataJson.topic === '/usb_cam/image_rect_color') {
         // TODO: check and save the image received
         // this should return an image as a 2D array --> CHECK
-        console.log(dataJson.msg);
+        // console.log(dataJson.msg);
     }
 })
 
@@ -206,12 +207,22 @@ app.get('/basic/objectCenter', function (req, res) {
         // extract data from the request = relative movement of the robot arm to {{"x":-14,"y":-117,"z":100"}
         let msg = JSON.parse(req.query.msg);
 
-        // /usb_cam/image_rect_color
-        let subData2 = subscribeData("subscribe:/image", "/usb_cam/image_rect_color", "sensor_msgs/Image", "none", 0, 0);
-        console.log("subscribe data sent: " + JSON.stringify(subData2));
-        ws.send(JSON.stringify(subData2));
-
-        res.send("/basic/objectCenter endpoint completed successfully");
+        // call python script
+        let dataToSend;
+        // spawn new child process to call the python script
+        const python = spawn('python', ['script1.py']);
+        // collect data from the script
+        python.stdout.on('data', function (data) {
+            console.log('Pipe data from python script ...');
+            dataToSend = data.toString();
+        });
+        // in close event we are sure that the stream from the child process is closed
+        python.on('close', (code) => {
+            console.log(`child process close all stdio with code ${code}`);
+            // send data to browser
+            res.send(dataToSend)
+            //res.send("/basic/objectCenter endpoint completed successfully");
+        });
     }
 });
 
