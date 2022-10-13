@@ -205,7 +205,7 @@ app.get('/basic/objectCenter', function (req, res) {
         res.send("Error, missing msg parameter.");
     } else {
         // extract data from the request = relative movement of the robot arm to {{"x":-14,"y":-117,"z":100"}
-        let git pmsg = JSON.parse(req.query.msg);
+        let msg = JSON.parse(req.query.msg);
 
         // call python script
         let dataToSend;
@@ -219,6 +219,9 @@ app.get('/basic/objectCenter', function (req, res) {
             //console.log(dataToSend);
             dataToSend = JSON.parse(dataString);
             console.log(dataToSend);
+            console.log(dataToSend.distance);
+            console.log(dataToSend.center);
+            console.log(dataToSend.id);
             //res.send(dataToSend);
         });
         // in close event we are sure that the stream from the child process is closed
