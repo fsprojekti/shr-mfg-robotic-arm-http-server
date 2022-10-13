@@ -205,27 +205,27 @@ app.get('/basic/objectCenter', function (req, res) {
         res.send("Error, missing msg parameter.");
     } else {
         // extract data from the request = relative movement of the robot arm to {{"x":-14,"y":-117,"z":100"}
-        let msg = JSON.parse(req.query.msg);
+        let git pmsg = JSON.parse(req.query.msg);
 
         // call python script
         let dataToSend;
         // spawn new child process to call the python script
-        const python = spawn('python3', ['/home/hiwonder/ros/src/Ai_JetMax/scripts/apriltag_center.py','--help']);
+        const python = spawn('python3', ['/home/hiwonder/ros/src/Ai_JetMax/scripts/apriltag_center.py', '--help']);
         // collect data from the script
         python.stdout.on('data', function (data) {
-        	console.log('Pipe data from python script ...');
-	
-        	let dataString = data.toString();
-		//console.log(dataToSend);
-		dataToSend = JSON.parse(dataString);
-		console.log(dataToSend);
-		//res.send(dataToSend);
+            console.log('Pipe data from python script ...');
+
+            let dataString = data.toString();
+            //console.log(dataToSend);
+            dataToSend = JSON.parse(dataString);
+            console.log(dataToSend);
+            //res.send(dataToSend);
         });
-      // in close event we are sure that the stream from the child process is closed
-      python.on('close', (code) => {
+        // in close event we are sure that the stream from the child process is closed
+        python.on('close', (code) => {
             console.log(`child process close all stdio with code ${code}`);
             // send data 
-    	    res.send(dataToSend);
+            res.send(dataToSend);
             //res.send("/basic/objectCenter endpoint completed successfully");
         });
     }
@@ -352,8 +352,7 @@ function calculateDistance(msg) {
         let distance1 = Math.sqrt(Math.pow(0 - currentLocation.x, 2) + Math.pow(-162.94 - currentLocation.y, 2));
         let distance2 = Math.sqrt(Math.pow(msg.x - 0, 2) + Math.pow(msg.y - (-162.94), 2));
         distance = distance1 + distance2;
-    }
-    else {
+    } else {
         distance = msg.z;
     }
     console.log("current: ", currentLocation, ", target: ", msg, ", distance: " + distance);
