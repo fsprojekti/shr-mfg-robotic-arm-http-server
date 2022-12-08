@@ -89,9 +89,9 @@ B-->|API endpoints|C
     ``` 
 
 * **Notes**:
-    * <code>/basic/moveTo</code> API endpoint duration parameters actually represents the speed the robotic arm moves; the value can be around 100.
-    * <code>/basic/move</code> API endpoint duration parameter is the time of the move in seconds; the value depends on the length of the move **so don't do big moves in a short time**.
-    * When moving the robotic arm consider the limits of the robotic arm and of the operational area. 
+    * <code>/basic/moveTo</code> API endpoint duration parameters actually represent the speed the robotic arm moves; the value can be around 100.
+    * <code>/basic/move</code> API endpoint duration parameter is the time of the move in seconds; the value depends on the length of the move.
+    * When moving the robotic arm considers the limits of the robotic arm and of the operational area. 
 
 ## Formats of data
 * JetMax robotic arm state JSON object: 
