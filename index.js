@@ -19,74 +19,90 @@ let jetmaxState = {};
 // create a websocket connection to the jetmax socket server
 const jetmaxWebSocketServer = 'ws:' + config.roboticArmIpAddress + ":9090";
 console.log(jetmaxWebSocketServer);
-const ws = new WebSocket(jetmaxWebSocketServer);
+
+let ws = null;
+
+function connectWebSocket(attempt = 0) {
+
+    const maxAttempts = 100;
+    ws = new WebSocket(jetmaxWebSocketServer);
 
 // print a message when a successful connection to the socket server is made
-ws.on('open', function open() {
+    ws.on('open', function open() {
 
-    console.log("Connection to server " + jetmaxWebSocketServer + " successful.");
+        console.log("Connection to server " + jetmaxWebSocketServer + " successful after " + (attempt + 1) + " attempts.");
 
-    // SUBSCRIBE TO ALL RELEVANT TOPICS:
-    //  /jetmax/status/
-    let subData = subscribeData("subscribe:/jetmaxState", "/jetmax/status", "jetmax_control/JetMax", "none", 0, 0);
-    console.log("subscribe data sent: " + JSON.stringify(subData));
-    ws.send(JSON.stringify(subData));
+        // SUBSCRIBE TO ALL RELEVANT TOPICS:
+        //  /jetmax/status/
+        let subData = subscribeData("subscribe:/jetmaxState", "/jetmax/status", "jetmax_control/JetMax", "none", 0, 0);
+        console.log("subscribe data sent: " + JSON.stringify(subData));
+        ws.send(JSON.stringify(subData));
 
-    // /usb_cam/image_rect_color
-    // subData = subscribeData("subscribe:/image", "/usb_cam/image_rect_color", "sensor_msgs/Image", "none", 0, 0);
-    // console.log("subscribe data sent: " + JSON.stringify(subData));
-    // ws.send(JSON.stringify(subData));
+        // /usb_cam/image_rect_color
+        // subData = subscribeData("subscribe:/image", "/usb_cam/image_rect_color", "sensor_msgs/Image", "none", 0, 0);
+        // console.log("subscribe data sent: " + JSON.stringify(subData));
+        // ws.send(JSON.stringify(subData));
 
-    // ADVERTISE ALL RELEVANT TOPICS
-    // advertise the /jetmax/speed_command
-    let advData = advertiseData("advertise:/moveTo", "/jetmax/speed_command", "jetmax/SetJetMax", false, 100);
-    console.log("advertise data sent: " + JSON.stringify(advData));
-    ws.send(JSON.stringify(advData));
+        // ADVERTISE ALL RELEVANT TOPICS
+        // advertise the /jetmax/speed_command
+        let advData = advertiseData("advertise:/moveTo", "/jetmax/speed_command", "jetmax/SetJetMax", false, 100);
+        console.log("advertise data sent: " + JSON.stringify(advData));
+        ws.send(JSON.stringify(advData));
 
-    // advertise the /jetmax/relative_command
-    advData = advertiseData("advertise:/move", "/jetmax/relative_command", "jetmax/SetJetMax", false, 100);
-    console.log("advertise data sent: " + JSON.stringify(advData));
-    ws.send(JSON.stringify(advData));
+        // advertise the /jetmax/relative_command
+        advData = advertiseData("advertise:/move", "/jetmax/relative_command", "jetmax/SetJetMax", false, 100);
+        console.log("advertise data sent: " + JSON.stringify(advData));
+        ws.send(JSON.stringify(advData));
 
-    // advertise the /jetmax/end_effector/sucker/command
-    advData = advertiseData("advertise:/suction", "/jetmax/end_effector/sucker/command", "std_msgs/Bool", false, 100);
-    console.log("advertise data sent: " + JSON.stringify(advData));
-    ws.send(JSON.stringify(advData));
+        // advertise the /jetmax/end_effector/sucker/command
+        advData = advertiseData("advertise:/suction", "/jetmax/end_effector/sucker/command", "std_msgs/Bool", false, 100);
+        console.log("advertise data sent: " + JSON.stringify(advData));
+        ws.send(JSON.stringify(advData));
 
-})
+    })
+
 
 // handle a message event
-ws.on('message', function message(data) {
+    ws.on('message', function message(data) {
 
-    let dataJson = JSON.parse(data);
-    //console.log(dataJson);
+        let dataJson = JSON.parse(data);
+        //console.log(dataJson);
 
-    // for now only the /jetmax/status message is expected to arrive
-    if (dataJson.topic === '/jetmax/status') {
-        // update local variable for jetmax robot arm state - used by the /basic/state endpoint
-        jetmaxState = dataJson.msg;
-    } else if (dataJson.topic === '/usb_cam/image_rect_color') {
-        // TODO: check and save the image received
-        // this should return an image as a 2D array --> CHECK
-        // console.log(dataJson.msg);
-    }
-})
+        // for now only the /jetmax/status message is expected to arrive
+        if (dataJson.topic === '/jetmax/status') {
+            // update local variable for jetmax robot arm state - used by the /basic/state endpoint
+            jetmaxState = dataJson.msg;
+        } else if (dataJson.topic === '/usb_cam/image_rect_color') {
+            // TODO: check and save the image received
+            // this should return an image as a 2D array --> CHECK
+            // console.log(dataJson.msg);
+        }
+    })
 
 // handle an error event
-ws.on('error', function error(error) {
-    console.log("Error communication with the websocket server, reason: " + error);
-})
+    ws.on('error', function error(error) {
+        console.log("Error communication with the websocket server, reason: " + error);
+        if(attempt < maxAttempts) {
+            setTimeout(() => connectWebSocket(attempt+1),2000);
+        }
+        else {
+            console.error("Failed to connect after " + (attempt+1) + " attempts.");
+        }
+    })
 
 // handle a close event
-ws.on('close', function close(code) {
-    console.log("Websocket server connection closed, the code: " + code);
-})
+    ws.on('close', function close(code) {
+        console.log("Websocket server connection closed, the code: " + code);
+    })
 
 // handle an unexpected_response event
-ws.on('unexpected_response', function error(req, res) {
-    console.log("Unexpected response from the websocket server: " + res);
-})
+    ws.on('unexpected_response', function error(req, res) {
+        console.log("Unexpected response from the websocket server: " + res);
+    })
 
+}
+
+connectWebSocket();
 
 // #### API ENDPOINTS ####
 
@@ -124,7 +140,7 @@ app.get('/basic/moveTo', function (req, res) {
         // msg.duration = 100; // this is the default value for absolute movements
 
         // calculate optimal absolute move speed based on current and target location of the robotic arm end effector
-        // NOTE: in the publish message this is denoted as msg.duration
+        // NOTE: in the publishing message this is denoted as msg.duration
         // let speed = calculateSpeed(msg);
         msg.duration = config.absoluteMoveSpeedDefault;
 
